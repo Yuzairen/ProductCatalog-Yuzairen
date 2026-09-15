@@ -12,7 +12,7 @@ export default function CatalogScreen({ navigation }) {
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500); //delay
 
-  const { products, isLoading, isRefreshing, isError, isEmpty, fetchNextPage, refresh } = useCatalog(debouncedSearch);
+  const { products, isLoading, isFetchingMore, isRefreshing, isError, isEmpty, fetchNextPage, refresh } = useCatalog(debouncedSearch);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,7 +45,7 @@ export default function CatalogScreen({ navigation }) {
             isEmpty ? <ErrorState message="No products found." onRetry={refresh} /> : null
           }
           ListFooterComponent={
-            isLoading && products.length > 0 ? (
+            isFetchingMore ? (
               <ActivityIndicator style={styles.footerLoader} size="small" />
             ) : null
           }

@@ -4,6 +4,7 @@ import { fetchProducts, searchProducts } from "../api/products";
 export default function useCatalog(searchQuery = '') {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isError, setIsError] = useState(false);
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -12,7 +13,8 @@ export default function useCatalog(searchQuery = '') {
   const loadProducts = useCallback(async (currentSkip, isLoadMore = false, isRefresh = false) => {
     try {
       if (isRefresh) setIsRefreshing(true);
-      else if (!isLoadMore) setIsLoading(true);
+      else if (!isLoadMore) setIsFetchingMore(true);
+      else setIsLoading(true);
 
       setIsError(false);
 
@@ -24,7 +26,10 @@ export default function useCatalog(searchQuery = '') {
       const total = data?.total || 0;
 
       if (isLoadMore) {
-        setProducts(prev => [...prev, ...fetchedProducts]);
+        setProducts(prev => {
+          const combined = [...prev, ...fetchedProducts];
+          return Array.from(new Map(combined.map(item => [item.id, item])).values());
+        });
       } else {
         setProducts(fetchedProducts);
       }
@@ -40,8 +45,9 @@ export default function useCatalog(searchQuery = '') {
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
+      setIsFetchingMore(false);
     }
-  }, [searchQuery]); // <-- Fixed: Added searchQuery here so the search bar actually triggers updates!
+  }, [searchQuery]);
 
   // Re-run the fetch from page 0 anytime the searchQuery changes
   useEffect(() => {
@@ -51,7 +57,7 @@ export default function useCatalog(searchQuery = '') {
 
   // Triggered by the FlatList when the user scrolls to the bottom
   const fetchNextPage = () => {
-    if (!isLoading && hasMore && !isError && !isRefreshing) {
+    if (!isLoading && !isFetchingMore && hasMore && !isError && !isRefreshing) {
       const nextSkip = skip + 20;
       setSkip(nextSkip);
       loadProducts(nextSkip, true);
@@ -67,5 +73,5 @@ export default function useCatalog(searchQuery = '') {
   // Calculate the empty state dynamically (safeguarded with optional chaining)
   const isEmpty = !isLoading && !isError && products?.length === 0;
 
-  return { products, isLoading, isRefreshing, isError, isEmpty, fetchNextPage, refresh };
+  return { products, isLoading, isFetchingMore, isRefreshing, isError, isEmpty, fetchNextPage, refresh };
 }

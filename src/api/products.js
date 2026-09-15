@@ -21,3 +21,14 @@ export const fetchProductById = async (id) => {
     throw error;
   }
 };
+
+export const searchProducts = async (query, skip = 0, limit = 20) => {
+    try {
+        const response = await fetch(`${BASE_URL}/search?q=${query}&limit=${limit}&skip=${skip}`);
+        if (!response.ok) throw new Error('Failed to search products');
+        return await response.json();
+    } catch (error) {
+        console.error("Search API error:", error);
+        throw error;
+    }
+};

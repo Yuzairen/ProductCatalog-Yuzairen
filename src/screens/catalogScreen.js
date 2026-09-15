@@ -1,19 +1,26 @@
+import { useState } from "react";
 import { FlatList, ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCatalog } from "../hooks/useCatalog";
 import ProductCard from "../components/productCard";
 import ErrorState from "../components/errorState";
+import useDebounce from "../hooks/useDebounce";
+import SearchBar from "../components/searchBar";
+import { RefreshControl } from "react-native";
 
 export default function CatalogScreen({ navigation }) {
-  const { products, isLoading, isError, isEmpty, fetchNextPage, retry } = useCatalog();
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 500); //delay
 
-  if (isError) {
-    return <ErrorState message="Failed to load catalog." onRetry={retry} />;
-  }
+  const { products, isLoading, isRefreshing, isError, isEmpty, fetchNextPage, refresh } = useCatalog(debouncedSearch);
 
   return (
     <SafeAreaView style={styles.container}>
-      {isLoading && products.length === 0 ? (
+      <SearchBar value={searchInput} onChangeText={setSearchInput} />
+
+      {isError && products.length === 0 ? (
+        <ErrorState message="Failed to load catalog." onRetry={refresh} />
+      ):isLoading && products.length === 0 ? (
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color="#2e7d32" />
         </View>
@@ -29,8 +36,13 @@ export default function CatalogScreen({ navigation }) {
           )}
           onEndReached={fetchNextPage}
           onEndReachedThreshold={0.5}
+
+          // Pull-to-refresh functionality
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={['#2e7d32']} />
+          }
           ListEmptyComponent={
-            isEmpty ? <ErrorState message="No products found." onRetry={retry} /> : null
+            isEmpty ? <ErrorState message="No products found." onRetry={refresh} /> : null
           }
           ListFooterComponent={
             isLoading && products.length > 0 ? (

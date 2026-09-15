@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchProducts, searchProducts } from "../api/products";
 
-export default function useCatalog() {
+export default function useCatalog(searchQuery = '') {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -19,14 +19,18 @@ export default function useCatalog() {
       // Decide which API endpoint to hit based on if there is a search query
       const data = searchQuery ? await searchProducts(searchQuery, currentSkip) : await fetchProducts(currentSkip);
 
+      // Safely extract products and total, falling back to empty arrays/0 if the API acts up
+      const fetchedProducts = data?.products || [];
+      const total = data?.total || 0;
+
       if (isLoadMore) {
-        setProducts(prev => [...prev, ...data.products]);
+        setProducts(prev => [...prev, ...fetchedProducts]);
       } else {
-        setProducts(data.products);
+        setProducts(fetchedProducts);
       }
 
       // Check if we have reached the end of the database
-      if (currentSkip + data.products.length >= data.total) {
+      if (currentSkip + fetchedProducts.length >= total) {
         setHasMore(false);
       } else {
         setHasMore(true);
@@ -37,7 +41,7 @@ export default function useCatalog() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [searchQuery]); // <-- Fixed: Added searchQuery here so the search bar actually triggers updates!
 
   // Re-run the fetch from page 0 anytime the searchQuery changes
   useEffect(() => {
@@ -60,8 +64,8 @@ export default function useCatalog() {
     loadProducts(0, false, true);
   };
 
-  // Calculate the empty state dynamically
-  const isEmpty = !isLoading && !isError && products.length === 0;
+  // Calculate the empty state dynamically (safeguarded with optional chaining)
+  const isEmpty = !isLoading && !isError && products?.length === 0;
 
   return { products, isLoading, isRefreshing, isError, isEmpty, fetchNextPage, refresh };
 }

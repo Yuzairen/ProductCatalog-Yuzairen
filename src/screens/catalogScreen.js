@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlatList, ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useCatalog } from "../hooks/useCatalog";
+import useCatalog from '../hooks/useCatalog';
 import ProductCard from "../components/productCard";
 import ErrorState from "../components/errorState";
 import useDebounce from "../hooks/useDebounce";

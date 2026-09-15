@@ -1,10 +1,12 @@
 import { Text} from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SafeAreaView } from "react-native-safe-area-context";
+import AppNavigator from './src/navigation/appNavigator';
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Product Catalog Setup Complete!</Text>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <AppNavigator />
+    </SafeAreaProvider>
   );
 }
